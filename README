@@ -1,0 +1,11 @@
+pool librfs
+
+rfs-pool manages the disk storage pool that rfs mounts and controls as part of its virtual filesystem. It handles filesystem creation and management within assigned disk paths.
+
+Source files in this project must begin with the following header format:
+
+  src/filename.rs
+  SPDX-License-Identifier: GPL-2.0-or-later
+  Copyright (c) year author
+
+This header ensures consistent license attribution and copyright declaration across the codebase.
