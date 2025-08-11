@@ -5,15 +5,27 @@
 pub fn generate_default_pools_config() -> &'static str {
     r#"# Configuration for rfs storage pools.
 # Each pool represents a storage location that rfs will manage.
+#
+# [[pool]]
+# pool_id = 1
+# is_removable = false
+# path = "/mnt/pool1"
+#
+# [[pool]]
+# pool_id = 2
+# is_removable = false
+# path = "/mnt/pool2"
 
-[[pool]]
-pool_id = 1
-is_removable = false
-path = "/mnt/pool1"
 
-[[pool]]
-pool_id = 2
-is_removable = false
-path = "/mnt/pool2"
+
+# Configuration for FUSE mount points.
+# Each mount point links a directory on your system to an rfs pool.
+#
+# [[mount]]
+# pool_id = 1
+# mount_point = "/home/user/rfs_documents"
+
+
+
 "#
 }

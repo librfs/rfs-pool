@@ -11,9 +11,19 @@ use std::path::Path;
 use std::sync::Mutex;
 use thiserror::Error;
 
+// Represents a FUSE mount point configuration.
+#[derive(Debug, Clone, Deserialize)]
+pub struct Mount {
+    pub pool_id: u64,
+    pub mount_point: String,
+}
+
 #[derive(Debug, Deserialize)]
 struct PoolsFile {
     pool: Vec<Pool>,
+    // This field is now optional.
+    #[serde(default)]
+    mount: Vec<Mount>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -39,7 +49,8 @@ pub enum PoolError {
 
 pub static POOLS: Lazy<Mutex<Vec<Pool>>> = Lazy::new(|| Mutex::new(Vec::new()));
 
-pub async fn load_and_mount_pools(path_str: &str) -> Result<(), PoolError> {
+// This function now returns the loaded pools and mounts.
+pub async fn load_and_mount_pools(path_str: &str) -> Result<(Vec<Pool>, Vec<Mount>), PoolError> {
     let path = Path::new(path_str);
 
     if !path.exists() {
@@ -51,15 +62,14 @@ pub async fn load_and_mount_pools(path_str: &str) -> Result<(), PoolError> {
             fs::create_dir_all(parent)?;
         }
         fs::write(path, config::generate_default_pools_config())?;
-        // Instead of continuing, return a specific error to force the user to configure the file.
         return Err(PoolError::MustConfigure(path_str.to_string()));
     }
 
     log(LogLevel::Info, &format!("Loading pools from {}", path_str));
     let content = fs::read_to_string(path)?;
-    // The `mut` keyword has been removed here as requested.
     let pools_from_file: PoolsFile = toml::from_str(&content)?;
     let mut pools = pools_from_file.pool;
+    let mounts = pools_from_file.mount;
 
     if pools.is_empty() {
         return Err(PoolError::EmptyPools);
@@ -99,8 +109,8 @@ pub async fn load_and_mount_pools(path_str: &str) -> Result<(), PoolError> {
     log(LogLevel::Debug, "Pool path accessibility check complete.");
 
     let mut pools_guard = POOLS.lock().unwrap();
-    *pools_guard = pools;
+    *pools_guard = pools.clone();
 
     log(LogLevel::Info, "Storage pools mounted successfully.");
-    Ok(())
+    Ok((pools, mounts))
 }
